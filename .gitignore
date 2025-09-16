@@ -59,6 +59,15 @@ venv
 
 # CMake
 cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Test executables and results
+solnp_tests
+utils_tests
+*_tests_result.xml
 
 # MacOsX specific
 .DS_Store

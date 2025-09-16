@@ -1,2 +1,0 @@
-/usr/bin/ar qc libsolnp_lib.a
-/usr/bin/ranlib libsolnp_lib.a

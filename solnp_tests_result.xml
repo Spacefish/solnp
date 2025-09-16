@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-  <testsuite name="solnp_tests" errors="0" failures="0" tests="171" hostname="tbd" time="0.005651" timestamp="2025-09-16T21:28:38Z">
-    <system-out/>
-    <system-err/>
-  </testsuite>
-</testsuites>

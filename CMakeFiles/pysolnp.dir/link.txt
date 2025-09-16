@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/pysolnp.dir/link.d -shared  -o pysolnpNone CMakeFiles/pysolnp.dir/python_solnp/pysolver.cpp.o  -flto library/dlib/dlib/libdlib.a -lsqlite3

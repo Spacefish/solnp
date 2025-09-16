@@ -214,5 +214,79 @@ namespace SolnpTests
                 CppSolnpInterop.solnp_free_result(cppResultPtr);
             }
         }
+
+        // Test a quadratic fit for 4 points in a two-dimensional space.
+        [Fact]
+        public void QuadraticFit4Points_CppAndCSharpProduceSameResults()
+        {
+            // The 4 points to fit: (-1, 2), (0, 1), (1, 2), (2, 5)
+            // The quadratic function is y = ax^2 + bx + c
+            // The parameters to optimize are a, b, c.
+            // The objective is to minimize the sum of squared errors.
+            // The known optimal solution for these points is a=1, b=0, c=1, which gives y = x^2 + 1.
+
+            // C# Implementation
+            Vector<double> QuadraticFitCs(Vector<double> p)
+            {
+                double a = p[0], b = p[1], c = p[2];
+                double err = 0.0;
+                err += Math.Pow(2 - (a * Math.Pow(-1, 2) + b * (-1) + c), 2);
+                err += Math.Pow(1 - (a * Math.Pow(0, 2) + b * 0 + c), 2);
+                err += Math.Pow(2 - (a * Math.Pow(1, 2) + b * 1 + c), 2);
+                err += Math.Pow(5 - (a * Math.Pow(2, 2) + b * 2 + c), 2);
+                return Vector<double>.Build.Dense(new[] { err });
+            }
+
+            var initialParams = Matrix<double>.Build.DenseOfArray(new double[,] { { 0 }, { 0 }, { 0 } });
+            var emptyBounds = Matrix<double>.Build.Dense(0, 0);
+            var hessian = Matrix<double>.Build.DenseIdentity(3);
+
+            var csResult = Solnp.solnp(QuadraticFitCs, initialParams, emptyBounds, hessian);
+
+            // C++ Implementation
+            ObjectiveFunctionDelegate objectiveFunc = (IntPtr paramsPtr, int paramCount, IntPtr resultPtr) =>
+            {
+                double[] p = new double[paramCount];
+                Marshal.Copy(paramsPtr, p, 0, paramCount);
+
+                double a = p[0], b = p[1], c = p[2];
+                double err = 0.0;
+                err += Math.Pow(2 - (a * -1 * -1 + b * -1 + c), 2);
+                err += Math.Pow(1 - (a * 0 * 0 + b * 0 + c), 2);
+                err += Math.Pow(2 - (a * 1 * 1 + b * 1 + c), 2);
+                err += Math.Pow(5 - (a * 2 * 2 + b * 2 + c), 2);
+                Marshal.Copy(new double[] { err }, 0, resultPtr, 1);
+            };
+
+            double[] initialParamsArray = { 0.0, 0.0, 0.0 };
+
+            IntPtr cppResultPtr = CppSolnpInterop.solnp_solve(
+                objectiveFunc, null, initialParamsArray, 3, null, null, 0,
+                1.0, 400, 800, 1e-7, 1e-8);
+
+            Assert.NotEqual(IntPtr.Zero, cppResultPtr);
+
+            var cppResult = CppSolnpInterop.GetResult(cppResultPtr);
+            var cppOptimum = CppSolnpInterop.GetOptimum(cppResult.optimum, cppResult.optimum_length);
+
+            try
+            {
+                // Compare results
+                Assert.Equal(csResult.Converged, cppResult.converged == 1);
+
+                // Allow for some numerical differences due to different implementations
+                Assert.Equal(csResult.SolveValue, cppResult.solve_value, 3); // 3 decimal places
+
+                Assert.Equal(3, cppOptimum.Length);
+                for (int i = 0; i < 3; i++)
+                {
+                    Assert.Equal(csResult.Optimum[i], cppOptimum[i], 3);
+                }
+            }
+            finally
+            {
+                CppSolnpInterop.solnp_free_result(cppResultPtr);
+            }
+        }
     }
 }

@@ -1,106 +1,84 @@
-# SOLNP - C++ and C# Nonlinear Optimization Library
+# Instructions for Jules, AI Software Engineer
 
-**IMPORTANT: The C++ implementation is the reference implementation, and the C# implementation is a port. If the C# implementation behaves differently than the C++ version, it should be fixed to match the C++ version.**
+This document provides instructions for working on the SOLNP project.
 
-**ALWAYS reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
+**Core Principles:**
+- The C++ implementation in `/src` is the reference. The C# implementation in `/dotnet` is a port and must match the C++ version's behavior.
+- This project focuses on C++ and C# development. Ignore the Python implementation.
+- Always refer to these instructions.
 
-## Working Effectively
+## Initial Setup
 
-**IMPORTANT**: This project focuses on **C++ implementation** (in `src` folder) and **C# implementation** (in `dotnet` folder). **Ignore the Python implementation** - we only work with C++ and C# versions.
+Run these commands once after cloning the repository:
 
-### Prerequisites and Dependencies
-- Install git submodules before building:  
-  `git submodule init && git submodule update`
-- CMake >= 2.8.12 (usually available as `cmake`)
-- C++ compiler (g++ or clang++, C++11 support required)
-- Make (GNU Make)
-- .NET 8.0 SDK (for C# builds)
+1.  **Initialize Git Submodules:**
+    ```bash
+    git submodule init && git submodule update
+    ```
+2.  **Apply build fix for Catch2:**
+    ```bash
+    sed -i 's/SIGSTKSZ/16384/g' library/Catch2/single_include/catch.hpp
+    ```
 
-### C++ Development - Building and Testing
-- **NEVER CANCEL: First build takes 2+ minutes. NEVER CANCEL. Set timeout to 300+ seconds.**
-- Configure the project:  
-  `cmake .`  -- takes 4 seconds
-- Build C++ tests:  
-  `make solnp_tests utils_tests`  -- takes 114 seconds. **NEVER CANCEL**. Set timeout to 300+ seconds.
-- Run C++ tests:  
-  `./solnp_tests -r junit > solnp_tests_result.xml`  -- takes <1 second
-  `./utils_tests -r junit > utils_tests_result.xml`  -- takes <1 second
+## Development Workflows
 
-### Known Issues and Workarounds
-- **Catch2 SIGSTKSZ compilation issue**: If build fails with "size of array 'altStackMem' is not an integral constant-expression", apply this fix:  
-  `sed -i 's/SIGSTKSZ/16384/g' library/Catch2/single_include/catch.hpp`
-- This is required on modern Linux systems with glibc that makes SIGSTKSZ non-constant.
+### C++ Workflow
 
-### C# Development - Building and Testing
-- **Build C# projects**:
-  ```bash
-  cd dotnet
-  dotnet build  # Takes ~15 seconds, builds both library and test app
-  ```
-- **Run C# test application**:
-  ```bash
-  cd dotnet
-  dotnet run --project TestApp  # Runs Rosenbrock optimization test
-  ```
-- **Run cross-implementation validation tests**:
-  ```bash
-  cd dotnet
-  # First, build the native C++ library (required for P/Invoke tests)
-  cd .. && mkdir -p build && cd build
-  cmake .. && make solnp_native  # Builds libsolnp_native.so
-  cd ../dotnet
-  dotnet test SolnpTests  # Runs XUnit tests comparing C++ vs C# results
-  ```
-- **C# project structure**:
-  - `solnp/` - C# library project with SOLNP implementation
-  - `TestApp/` - Console application that tests the C# implementation
-  - `SolnpTests/` - **Cross-implementation validation tests using XUnit and P/Invoke**
+1.  **Configure the project (if not done before):**
+    ```bash
+    cmake .
+    ```
+2.  **Build C++ tests:** (This may take ~2 minutes)
+    ```bash
+    make solnp_tests utils_tests
+    ```
+3.  **Run C++ tests:**
+    ```bash
+    ./solnp_tests -r junit > solnp_tests_result.xml
+    ./utils_tests -r junit > utils_tests_result.xml
+    ```
+    *Check for exit code 0 and review the XML reports for failures.*
 
-## Validation
+### C# Workflow
 
-### Mandatory Testing After Changes
-- **ALWAYS run both C++ test suites after making changes to C++ code:**
-  ```bash
-  cmake .
-  make solnp_tests utils_tests  # Can build both simultaneously
-  ./solnp_tests -r junit > solnp_tests_result.xml
-  ./utils_tests -r junit > utils_tests_result.xml
-  ```
-- **ALWAYS test C# implementation after making changes to C# code:**
-  ```bash
-  cd dotnet
-  dotnet build  # Rebuild C# projects
-  dotnet run --project TestApp  # Verify functionality
-  ```
-- **ALWAYS run cross-implementation validation tests after changes to either C++ or C# core algorithms:**
-  ```bash
-  # Build native library first
-  mkdir -p build && cd build
-  cmake .. && make solnp_native  # NEVER CANCEL: Takes ~2 minutes
-  cd ../dotnet
-  dotnet test SolnpTests  # Runs comprehensive comparison tests
-  ```
-- **Cross-implementation validation tests**: The `dotnet/SolnpTests` directory contains XUnit tests that compare results between C++ and C# implementations:
-  - **QuadraticFunction_CppAndCSharpProduceSameResults**: Tests simple quadratic function f(x) = x²
-  - **BoxFunction_CppAndCSharpProduceSameResults**: Tests Box benchmark function with equality constraints  
-  - **RosenbrockFunction_CppAndCSharpProduceSameResults**: Tests Rosenbrock function optimization
-  - Uses P/Invoke (`CppSolnpInterop.cs`) to call native C++ library (`libsolnp_native.so`) built from `src/solnp_c_api.cpp`
-- **Cross-platform consistency testing**: Both implementations should produce the same optimization results for the same input problems within numerical tolerances.
-- **ALWAYS check test results**: Tests should exit with code 0 and run in <1 second each
-- **Manual validation scenarios**: 
-  - After changing core SOLNP algorithm (`src/solnp.hpp` or `dotnet/solnp/Solnp.cs`), verify basic optimization works by running both C++ and C# test examples
-  - After changing utilities (`src/utils.hpp` or `dotnet/solnp/Utils.cs`), run corresponding tests
-  - Check that any CMakeLists.txt or .csproj changes don't break the build
-  - **Compare outputs**: Both C++ (`cpp_test/main`) and C# (`dotnet/TestApp`) should produce similar optimization results for the Rosenbrock function
-  - **Run cross-implementation tests**: `dotnet test SolnpTests` should pass, validating consistency between implementations
+1.  **Navigate to the dotnet directory:**
+    ```bash
+    cd dotnet
+    ```
+2.  **Build C# projects:**
+    ```bash
+    dotnet build
+    ```
+3.  **Run C# test application:**
+    ```bash
+    dotnet run --project TestApp
+    ```
+    *After making changes, `cd` back to the root directory.*
 
-### CI Integration
-- GitHub Actions runs on every push/PR for:
-  - Building and testing C++ implementation
-  - Building and testing C# implementation  
-  - CodeCov analysis (only on release branch)
-- CodeCov workflow requires: `cmake -DRUN_CODECOV=TRUE . && make solnp_tests utils_tests`
-- **NEVER CANCEL: CI builds can take 10+ minutes for complete testing**
+### Cross-Implementation Validation Workflow
+
+This is mandatory when changing the core algorithm in either C++ or C#.
+
+1.  **Build the C++ native library:** (This may take ~2 minutes)
+    ```bash
+    # From the root directory
+    mkdir -p build && cd build
+    cmake .. && make solnp_native
+    cd ..
+    ```
+2.  **Run the cross-implementation tests:**
+    ```bash
+    cd dotnet
+    dotnet test SolnpTests
+    cd ..
+    ```
+    *All tests should pass to ensure consistency between C++ and C# implementations.*
+
+## Testing Policy
+
+-   After any C++ code change, run the **C++ Workflow**.
+-   After any C# code change, run the **C# Workflow**.
+-   After changes to the core SOLNP algorithm in either language, run the **Cross-Implementation Validation Workflow**.
 
 ## Project Structure
 
@@ -131,7 +109,7 @@
   - `pybind11/` - Python-C++ bindings (legacy, not used)
 - `CMakeLists.txt` - Build system configuration for C++
 
-### Build System Details
+## Build System Details
 - **C++ Build System**:
   - Uses CMake with default mode: Builds C++ tests (`BUILD_PYSOLNP=FALSE`)
   - Dependencies automatically built as static libraries
@@ -143,71 +121,3 @@
   - Dependencies managed via NuGet (MathNet.Numerics for linear algebra)
   - Cross-platform compatible (Windows, macOS, Linux)
   - **Cross-implementation tests**: Uses XUnit and P/Invoke to call native C++ library
-
-## Common Tasks
-
-### After Fresh Clone
-```bash
-# Essential setup - run these commands in order:
-git submodule init && git submodule update    # 30 seconds
-sed -i 's/SIGSTKSZ/16384/g' library/Catch2/single_include/catch.hpp  # Fix compilation issue
-cmake .                                       # 4 seconds  
-make solnp_tests utils_tests                  # 114 seconds total - NEVER CANCEL
-./solnp_tests -r junit > solnp_tests_result.xml    # <1 second
-./utils_tests -r junit > utils_tests_result.xml    # <1 second
-
-# Test C# implementation
-cd dotnet
-dotnet build                                  # ~15 seconds
-dotnet run --project TestApp                 # <1 second - should show convergence results
-
-# Build native library and run cross-implementation validation tests
-cd .. && mkdir -p build && cd build
-cmake .. && make solnp_native                # ~2 minutes - NEVER CANCEL
-cd ../dotnet
-dotnet test SolnpTests                       # ~10 seconds - validates C++ vs C# consistency
-```
-
-### Clean Build
-```bash
-make clean
-# Then follow "After Fresh Clone" steps starting from cmake
-```
-
-### Development Workflow
-- **For C++ changes**: Make changes to source files in `/src/` or test files in `/test/`
-- **For C# changes**: Make changes to files in `/dotnet/solnp/` or `/dotnet/TestApp/`
-- **ALWAYS rebuild and test both implementations**:
-  ```bash
-  # C++ testing
-  make solnp_tests utils_tests    # Only rebuilds what changed
-  ./solnp_tests -r junit > solnp_tests_result.xml
-  ./utils_tests -r junit > utils_tests_result.xml
-  
-  # C# testing  
-  cd dotnet
-  dotnet build
-  dotnet run --project TestApp
-  
-  # Cross-implementation validation (after algorithm changes)
-  cd .. && cd build  # or mkdir -p build && cd build if not exists
-  make solnp_native  # Rebuild native library if C++ core changed
-  cd ../dotnet
-  dotnet test SolnpTests  # Validates both implementations produce same results
-  ```
-- **Verify consistency**: Both C++ and C# implementations should produce similar results for the same optimization problems
-- **Cross-implementation tests**: The XUnit tests in `SolnpTests` validate numerical consistency between implementations
-- Verify test results are successful (exit code 0)
-
-### Important Notes
-- **Reference Implementation**: The C++ implementation is the reference implementation, and the C# implementation is a port
-- **Behavioral Consistency**: If the C# implementation behaves differently than the C++ version, it should be fixed to match the C++ version
-- **Dual Implementation**: This project maintains parallel C++ and C# implementations of the SOLNP algorithm
-- **Cross-Implementation Validation**: The `dotnet/SolnpTests` directory contains comprehensive XUnit tests that validate both implementations produce identical results within numerical tolerances
-- **Native Interop**: C# tests use P/Invoke to call the native C++ library (`libsolnp_native.so`) built from `src/solnp_c_api.cpp`
-- **Consistency Testing**: Both implementations should produce similar results for the same optimization problems (Rosenbrock, Box, and Quadratic functions validate this)
-- **Header-only C++ design**: Main C++ functionality is in `.hpp` files
-- **DLIB dependency**: C++ version uses DLIB for matrix operations, C# version uses MathNet.Numerics
-- **Git submodules**: **ALWAYS** initialize after clone or the C++ build will fail
-- **Build artifacts**: Excluded by .gitignore (CMakeCache.txt, CMakeFiles/, executables, bin/, obj/, etc.)
-- **Algorithm**: Both implementations use the SOLNP (Sequential Quadratic Programming) algorithm for constrained nonlinear optimization

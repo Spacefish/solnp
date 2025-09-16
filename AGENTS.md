@@ -19,6 +19,11 @@ Run these commands once after cloning the repository:
     ```bash
     sed -i 's/SIGSTKSZ/16384/g' library/Catch2/single_include/catch.hpp
     ```
+3. **Install dotnet-sdk 8.0**
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y dotnet-sdk-8.0
+    ```
 
 ## Development Workflows
 

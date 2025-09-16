@@ -1,8 +1,10 @@
-# SOLNP - Python/C++ Nonlinear Optimization Library
+# SOLNP - C++ and C# Nonlinear Optimization Library
 
 **ALWAYS reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
 ## Working Effectively
+
+**IMPORTANT**: This project focuses on **C++ implementation** (in `/src/` folder) and **C# implementation** (in `/dotnet/` folder). **Ignore the Python implementation** - we only work with C++ and C# versions.
 
 ### Prerequisites and Dependencies
 - Install git submodules before building:  
@@ -10,7 +12,7 @@
 - CMake >= 2.8.12 (usually available as `cmake`)
 - C++ compiler (g++ or clang++, C++11 support required)
 - Make (GNU Make)
-- Python 3.6+ (for Python builds)
+- .NET 8.0 SDK (for C# builds)
 
 ### C++ Development - Building and Testing
 - **NEVER CANCEL: First build takes 2+ minutes. NEVER CANCEL. Set timeout to 300+ seconds.**
@@ -27,33 +29,52 @@
   `sed -i 's/SIGSTKSZ/16384/g' library/Catch2/single_include/catch.hpp`
 - This is required on modern Linux systems with glibc that makes SIGSTKSZ non-constant.
 
-### Python Development
-- **Python build currently has issues** - do not attempt `python3 setup.py build_ext --inplace` as it fails during cmake build phase
-- Python tests can be run if pysolnp is installed: `python3 -m pytest python_solnp/test/test.py -v`
-- Examples are available in `python_solnp/examples/` showing usage of the pysolnp module
+### C# Development - Building and Testing
+- **Build C# projects**:
+  ```bash
+  cd dotnet
+  dotnet build  # Takes ~15 seconds, builds both library and test app
+  ```
+- **Run C# test application**:
+  ```bash
+  cd dotnet
+  dotnet run --project TestApp  # Runs Rosenbrock optimization test
+  ```
+- **C# project structure**:
+  - `solnp/` - C# library project with SOLNP implementation
+  - `TestApp/` - Console application that tests the C# implementation
 
 ## Validation
 
 ### Mandatory Testing After Changes
-- **ALWAYS run both test suites after making changes to C++ code:**
+- **ALWAYS run both C++ test suites after making changes to C++ code:**
   ```bash
   cmake .
   make solnp_tests utils_tests  # Can build both simultaneously
   ./solnp_tests -r junit > solnp_tests_result.xml
   ./utils_tests -r junit > utils_tests_result.xml
   ```
+- **ALWAYS test C# implementation after making changes to C# code:**
+  ```bash
+  cd dotnet
+  dotnet build  # Rebuild C# projects
+  dotnet run --project TestApp  # Verify functionality
+  ```
+- **Cross-platform consistency testing**: There are comparison tests between C++ and C# implementations to ensure consistent results. Both implementations should produce the same optimization results for the same input problems.
 - **ALWAYS check test results**: Tests should exit with code 0 and run in <1 second each
 - **Manual validation scenarios**: 
-  - After changing core SOLNP algorithm (`src/solnp.hpp`), verify basic optimization works by checking test examples
-  - After changing utilities (`src/utils.hpp`), run utils_tests specifically
-  - Check that any CMakeLists.txt changes don't break the build
+  - After changing core SOLNP algorithm (`src/solnp.hpp` or `dotnet/solnp/Solnp.cs`), verify basic optimization works by running both C++ and C# test examples
+  - After changing utilities (`src/utils.hpp` or `dotnet/solnp/Utils.cs`), run corresponding tests
+  - Check that any CMakeLists.txt or .csproj changes don't break the build
+  - **Compare outputs**: Both C++ (`cpp_test/main`) and C# (`dotnet/TestApp`) should produce similar optimization results for the Rosenbrock function
 
 ### CI Integration
 - GitHub Actions runs on every push/PR for:
-  - Building Python wheels (Windows, macOS, Linux)
+  - Building and testing C++ implementation
+  - Building and testing C# implementation  
   - CodeCov analysis (only on release branch)
 - CodeCov workflow requires: `cmake -DRUN_CODECOV=TRUE . && make solnp_tests utils_tests`
-- **NEVER CANCEL: CI builds can take 10+ minutes for wheel building**
+- **NEVER CANCEL: CI builds can take 10+ minutes for complete testing**
 
 ## Project Structure
 
@@ -64,24 +85,31 @@
   - `utils.hpp` - Mathematical utilities (norms, matrix operations)
   - `stdafx.h` - Standard includes
 - `/test/` - C++ tests using Catch2 framework
-- `/python_solnp/` - Python wrapper using pybind11:
-  - `pysolver.cpp` - Python bindings
-  - `examples/` - Python usage examples
-  - `test/` - Python test suite  
+- `/dotnet/` - C# implementation:
+  - `solnp/` - C# library project (.NET 8.0)
+    - `Solnp.cs` - Main SOLNP algorithm implementation (C# version)
+    - `Subnp.cs` - Sub-problem solver (C# version)  
+    - `Utils.cs` - Mathematical utilities (C# version)
+  - `TestApp/` - C# console test application
+  - `dotnet.sln` - Solution file for C# projects
+- `/cpp_test/` - C++ example application:
+  - `main.cpp` - Standalone C++ test using Rosenbrock function
 - `/library/` - Git submodules for dependencies:
   - `dlib/` - Mathematical library (matrix operations, optimization)
   - `Catch2/` - C++ testing framework
-  - `pybind11/` - Python-C++ bindings
-- `setup.py` - Python package build configuration
-- `CMakeLists.txt` - Build system configuration
+  - `pybind11/` - Python-C++ bindings (legacy, not used)
+- `CMakeLists.txt` - Build system configuration for C++
 
 ### Build System Details
-- Uses CMake with two modes:
-  - Default: Builds C++ tests (`BUILD_PYSOLNP=FALSE`)
-  - Python: Builds Python module (`BUILD_PYSOLNP=TRUE`)
-- Dependencies automatically built as static libraries
-- No external BLAS/LAPACK required (uses dlib's built-in implementation)
-- CUDA support disabled (not required for this project)
+- **C++ Build System**:
+  - Uses CMake with default mode: Builds C++ tests (`BUILD_PYSOLNP=FALSE`)
+  - Dependencies automatically built as static libraries
+  - No external BLAS/LAPACK required (uses dlib's built-in implementation)
+  - CUDA support disabled (not required for this project)
+- **C# Build System**:
+  - Uses .NET 8.0 SDK and MSBuild
+  - Dependencies managed via NuGet (MathNet.Numerics for linear algebra)
+  - Cross-platform compatible (Windows, macOS, Linux)
 
 ## Common Tasks
 
@@ -94,6 +122,11 @@ cmake .                                       # 4 seconds
 make solnp_tests utils_tests                  # 114 seconds total - NEVER CANCEL
 ./solnp_tests -r junit > solnp_tests_result.xml    # <1 second
 ./utils_tests -r junit > utils_tests_result.xml    # <1 second
+
+# Test C# implementation
+cd dotnet
+dotnet build                                  # ~15 seconds
+dotnet run --project TestApp                 # <1 second - should show convergence results
 ```
 
 ### Clean Build
@@ -103,18 +136,28 @@ make clean
 ```
 
 ### Development Workflow
-- Make changes to source files in `/src/` or test files in `/test/`
-- **ALWAYS rebuild and test**:
+- **For C++ changes**: Make changes to source files in `/src/` or test files in `/test/`
+- **For C# changes**: Make changes to files in `/dotnet/solnp/` or `/dotnet/TestApp/`
+- **ALWAYS rebuild and test both implementations**:
   ```bash
+  # C++ testing
   make solnp_tests utils_tests    # Only rebuilds what changed
   ./solnp_tests -r junit > solnp_tests_result.xml
   ./utils_tests -r junit > utils_tests_result.xml
+  
+  # C# testing  
+  cd dotnet
+  dotnet build
+  dotnet run --project TestApp
   ```
+- **Verify consistency**: Both C++ and C# implementations should produce similar results for the same optimization problems
 - Verify test results are successful (exit code 0)
 
 ### Important Notes
-- Header-only library design: Main functionality is in `.hpp` files
-- DLIB dependency: Provides matrix operations, no need to implement from scratch
-- Git submodules: **ALWAYS** initialize after clone or the build will fail
-- Build artifacts: Excluded by .gitignore (CMakeCache.txt, CMakeFiles/, executables, etc.)
-- The library implements the SOLNP (Sequential Quadratic Programming) algorithm for constrained nonlinear optimization
+- **Dual Implementation**: This project maintains parallel C++ and C# implementations of the SOLNP algorithm
+- **Consistency Testing**: Both implementations should produce similar results for the same optimization problems (Rosenbrock function test validates this)
+- **Header-only C++ design**: Main C++ functionality is in `.hpp` files
+- **DLIB dependency**: C++ version uses DLIB for matrix operations, C# version uses MathNet.Numerics
+- **Git submodules**: **ALWAYS** initialize after clone or the C++ build will fail
+- **Build artifacts**: Excluded by .gitignore (CMakeCache.txt, CMakeFiles/, executables, bin/, obj/, etc.)
+- **Algorithm**: Both implementations use the SOLNP (Sequential Quadratic Programming) algorithm for constrained nonlinear optimization

@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -rdynamic -Wl,--dependency-file=CMakeFiles/utils_tests.dir/link.d CMakeFiles/utils_tests.dir/test/test_utils.cpp.o -o utils_tests  libcatch2_main.a libsolnp_lib.a library/dlib/dlib/libdlib.a -lsqlite3

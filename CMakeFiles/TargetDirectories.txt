@@ -1,0 +1,10 @@
+/home/runner/work/solnp/solnp/CMakeFiles/pysolnp.dir
+/home/runner/work/solnp/solnp/CMakeFiles/edit_cache.dir
+/home/runner/work/solnp/solnp/CMakeFiles/rebuild_cache.dir
+/home/runner/work/solnp/solnp/library/dlib/CMakeFiles/edit_cache.dir
+/home/runner/work/solnp/solnp/library/dlib/CMakeFiles/rebuild_cache.dir
+/home/runner/work/solnp/solnp/library/dlib/dlib/CMakeFiles/dlib.dir
+/home/runner/work/solnp/solnp/library/dlib/dlib/CMakeFiles/edit_cache.dir
+/home/runner/work/solnp/solnp/library/dlib/dlib/CMakeFiles/rebuild_cache.dir
+/home/runner/work/solnp/solnp/library/pybind11/CMakeFiles/edit_cache.dir
+/home/runner/work/solnp/solnp/library/pybind11/CMakeFiles/rebuild_cache.dir

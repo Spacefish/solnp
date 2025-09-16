@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace dotnet;
+namespace SolnpLib;
 
 public struct SolveResult
 {

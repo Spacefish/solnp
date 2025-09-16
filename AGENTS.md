@@ -6,7 +6,7 @@
 
 ## Working Effectively
 
-**IMPORTANT**: This project focuses on **C++ implementation** (in `/src/` folder) and **C# implementation** (in `/dotnet/` folder). **Ignore the Python implementation** - we only work with C++ and C# versions.
+**IMPORTANT**: This project focuses on **C++ implementation** (in `src` folder) and **C# implementation** (in `dotnet` folder). **Ignore the Python implementation** - we only work with C++ and C# versions.
 
 ### Prerequisites and Dependencies
 - Install git submodules before building:  

@@ -54,6 +54,14 @@ ELSE()
     add_library(solnp_lib STATIC src/solnp.hpp src/stdafx.h src/subnp.hpp src/utils.hpp)
     set_target_properties(solnp_lib PROPERTIES LINKER_LANGUAGE CXX)
 
+    # Add shared library for C# interop
+    add_library(solnp_native SHARED src/solnp_c_api.cpp src/solnp.hpp src/stdafx.h src/subnp.hpp src/utils.hpp)
+    target_link_libraries(solnp_native PRIVATE dlib::dlib)
+    set_target_properties(solnp_native PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED ON
+    )
+
     add_library(catch2_main STATIC test/test_main.cpp)
     add_executable(solnp_tests test/test_solnp.cpp)
     add_executable(utils_tests test/test_utils.cpp)

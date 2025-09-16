@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "solnp", "solnp\solnp.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "TestApp\TestApp.csproj", "{5B37641D-65EC-4C88-BFC2-DEE5F54A84A6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolnpTests", "SolnpTests\SolnpTests.csproj", "{D6E20F67-5E9B-478D-B143-18027C149A85}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{5B37641D-65EC-4C88-BFC2-DEE5F54A84A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B37641D-65EC-4C88-BFC2-DEE5F54A84A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B37641D-65EC-4C88-BFC2-DEE5F54A84A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6E20F67-5E9B-478D-B143-18027C149A85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6E20F67-5E9B-478D-B143-18027C149A85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6E20F67-5E9B-478D-B143-18027C149A85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6E20F67-5E9B-478D-B143-18027C149A85}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -214,5 +214,130 @@ namespace SolnpTests
                 CppSolnpInterop.solnp_free_result(cppResultPtr);
             }
         }
+
+        // Test a quadratic fit for a set of points in a two-dimensional space.
+        [Theory]
+        [InlineData(new double[] { -1, 2, 0, 1, 1, 2, 2, 5 })] // y = x^2 + 1
+        [InlineData(new double[] { -2, 4, -1, 1, 1, 1, 2, 4 })] // y = x^2
+        [InlineData(new double[] { -1, -2, 0, -1, 1, 4, 2, 13 })] // y = 2x^2 + 3x - 1
+        [InlineData(new double[] { -1, -2, 0, 0, 1, 0, 2, -2 })] // y = -x^2 + x
+        [InlineData(new double[] { -1, 1.1, 0, 0.1, 1, 1.2, 2, 4.3 })] // Noisy data around y = x^2
+        [InlineData(new double[] { 0, 0, 1, 1, 2, 2, 3, 3 })] // Collinear points
+        [InlineData(new double[] { 0, 1, 1, 3, 2, 5, 3, 7 })] // Collinear points
+        public void QuadraticFit_CppAndCSharpProduceSameResults(double[] points)
+        {
+            // The quadratic function is y = ax^2 + bx + c
+            // The parameters to optimize are a, b, c.
+            // The objective is to minimize the sum of squared errors.
+
+            // C# Implementation
+            Vector<double> QuadraticFitCs(Vector<double> p)
+            {
+                double a = p[0], b = p[1], c = p[2];
+                double err = 0.0;
+                for (int i = 0; i < points.Length; i += 2)
+                {
+                    double x = points[i];
+                    double y = points[i + 1];
+                    err += Math.Pow(y - (a * x * x + b * x + c), 2);
+                }
+                return Vector<double>.Build.Dense(new[] { err });
+            }
+
+            var initialParams = Matrix<double>.Build.DenseOfArray(new double[,] { { 0 }, { 0 }, { 0 } });
+            var emptyBounds = Matrix<double>.Build.Dense(0, 0);
+            var hessian = Matrix<double>.Build.DenseIdentity(3);
+
+            var csResult = Solnp.solnp(QuadraticFitCs, initialParams, emptyBounds, hessian);
+
+            // C++ Implementation
+            ObjectiveFunctionDelegate objectiveFunc = (IntPtr paramsPtr, int paramCount, IntPtr resultPtr) =>
+            {
+                double[] p = new double[paramCount];
+                Marshal.Copy(paramsPtr, p, 0, paramCount);
+
+                double a = p[0], b = p[1], c = p[2];
+                double err = 0.0;
+                for (int i = 0; i < points.Length; i += 2)
+                {
+                    double x = points[i];
+                    double y = points[i + 1];
+                    err += Math.Pow(y - (a * x * x + b * x + c), 2);
+                }
+                Marshal.Copy(new double[] { err }, 0, resultPtr, 1);
+            };
+
+            double[] initialParamsArray = { 0.0, 0.0, 0.0 };
+
+            IntPtr cppResultPtr = CppSolnpInterop.solnp_solve(
+                objectiveFunc, null, initialParamsArray, 3, null, null, 0,
+                1.0, 400, 800, 1e-7, 1e-8);
+
+            Assert.NotEqual(IntPtr.Zero, cppResultPtr);
+
+            var cppResult = CppSolnpInterop.GetResult(cppResultPtr);
+            var cppOptimum = CppSolnpInterop.GetOptimum(cppResult.optimum, cppResult.optimum_length);
+
+            try
+            {
+                // Check for collinearity
+                bool isCollinear = false;
+                if (points.Length >= 6)
+                {
+                    double x1 = points[0], y1 = points[1];
+                    double x2 = points[2], y2 = points[3];
+
+                    if (Math.Abs(x1 - x2) < 1e-9) // vertical line
+                    {
+                        isCollinear = true;
+                        for (int i = 4; i < points.Length; i+=2)
+                        {
+                            if (Math.Abs(points[i] - x1) > 1e-9)
+                            {
+                                isCollinear = false;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        double slope = (y2 - y1) / (x2 - x1);
+                        isCollinear = true;
+                        for (int i = 4; i < points.Length; i += 2)
+                        {
+                            double xi = points[i];
+                            double yi = points[i + 1];
+                            if (Math.Abs((yi - y1) - slope * (xi - x1)) > 1e-6)
+                            {
+                                isCollinear = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (isCollinear)
+                {
+                    // For collinear points, 'a' should be close to 0
+                    Assert.Equal(0, csResult.Optimum[0], 3);
+                    Assert.Equal(0, cppOptimum[0], 3);
+                }
+                else
+                {
+                    // Compare results for non-collinear points
+                    Assert.Equal(csResult.Converged, cppResult.converged == 1);
+                    Assert.Equal(csResult.SolveValue, cppResult.solve_value, 3);
+                    Assert.Equal(3, cppOptimum.Length);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Assert.Equal(csResult.Optimum[i], cppOptimum[i], 3);
+                    }
+                }
+            }
+            finally
+            {
+                CppSolnpInterop.solnp_free_result(cppResultPtr);
+            }
+        }
     }
 }

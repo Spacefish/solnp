@@ -1,5 +1,7 @@
 # SOLNP - C++ and C# Nonlinear Optimization Library
 
+**IMPORTANT: The C++ implementation is the reference implementation, and the C# implementation is a port. If the C# implementation behaves differently than the C++ version, it should be fixed to match the C++ version.**
+
 **ALWAYS reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
 ## Working Effectively
@@ -198,6 +200,8 @@ make clean
 - Verify test results are successful (exit code 0)
 
 ### Important Notes
+- **Reference Implementation**: The C++ implementation is the reference implementation, and the C# implementation is a port
+- **Behavioral Consistency**: If the C# implementation behaves differently than the C++ version, it should be fixed to match the C++ version
 - **Dual Implementation**: This project maintains parallel C++ and C# implementations of the SOLNP algorithm
 - **Cross-Implementation Validation**: The `dotnet/SolnpTests` directory contains comprehensive XUnit tests that validate both implementations produce identical results within numerical tolerances
 - **Native Interop**: C# tests use P/Invoke to call the native C++ library (`libsolnp_native.so`) built from `src/solnp_c_api.cpp`
